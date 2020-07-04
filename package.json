@@ -1,0 +1,24 @@
+{
+  "name": "idre-array-cache",
+  "version": "0.1.0",
+  "description": "A appendable array with file persistance/listeners, producer/consumer and inter process capabilities",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --slow 0"
+  },
+  "keywords": [
+    "cache",
+    "number",
+    "file",
+    "process",
+    "array",
+    "find",
+    "exists"
+  ],
+  "author": "Andreas Sehr <Softbrix>",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "mocha": "^8.0.1",
+    "signal-exit": "^3.0.3"
+  }
+}
