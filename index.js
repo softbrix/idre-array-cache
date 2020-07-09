@@ -183,16 +183,30 @@ IdreCache.prototype.push = function(value) {
 
 // Return a subarray with values
 IdreCache.prototype.slice = function(start, end) {
-    let itms = []
-    if (this._fInfo && start < this._fInfo.array.length) {
+    let itms = [];
+    const length = this._array.length + (this._fInfo ? this._fInfo.array.length : 0);
+    end = end || length;  // Init optional parameter
+    // Translate negative parameters to positive
+    if (start < 0) {
+        start += length;
+    }
+    if (end < 0) {
+        end += length;
+    }
+
+    // Handle the fInfo.array as a prefixed array
+    if (this._fInfo && this._fInfo.array) {
         let arr = this._fInfo.array;
-        itms = arr.slice(start, end)
-        start -= Math.max(arr.length, 0);
+        if (start < arr.length) {
+            itms = arr.slice(start, end)
+        }
+        start -= arr.length;
         end -= arr.length;
     }
     if (end > 0) {
         itms = itms.concat(this._array.slice(start, end));
     }
+
     return itms;
 }
 

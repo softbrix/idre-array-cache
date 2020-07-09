@@ -1,5 +1,6 @@
 const assert = require('assert');
 const IdreCache = require('..');
+const fs = require('fs').promises;
 
 const MIN_TIME = 946684799000;
 const MAX_TIME = 33149740506000;
@@ -49,5 +50,19 @@ describe('IdreCache with persistance', function () {
     } catch(e) {
 
     }
+  });
+  it('negative slice elements', async function () {
+    const fileName = './test/testdata-slice';
+    await fs.writeFile(fileName, '8\n9');
+    let sliceCache = new IdreCache();
+    await sliceCache.open(fileName);
+    sliceCache.push(11);
+    assert.deepEqual([11], sliceCache.slice(-1));
+    assert.deepEqual([9,11], sliceCache.slice(-2));
+    assert.deepEqual([9], sliceCache.slice(1, -1));
+    assert.deepEqual([9], sliceCache.slice(-2, -1));
+    assert.deepEqual([8,9], sliceCache.slice(0, -1));
+    assert.deepEqual([9,11], sliceCache.slice(-2, 55));
+    sliceCache.clear();
   });
 });
