@@ -1,6 +1,6 @@
 {
   "name": "idre-array-cache",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A appendable array with file persistance/listeners, producer/consumer and inter process capabilities",
   "main": "index.js",
   "scripts": {
