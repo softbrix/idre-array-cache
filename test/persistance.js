@@ -72,4 +72,19 @@ describe('IdreCache with persistance', function () {
     assert.deepEqual([9,11], sliceCache.slice(-2, 55));
     sliceCache.clear();
   });
+  it('should save on close', async function () {
+    let cache2 = new IdreCache();
+    await cache2.open('./datafile_close', { delay: 200});
+    assert.equal(cache2.length, 0)
+    cache2.push(nextVal());
+    cache2.push(nextVal());
+    assert.equal(cache2.length, 2)
+    await cache2.close();
+  });
+  it('should clear file', async function () {
+    let cache2 = new IdreCache();
+    await cache2.open('./datafile_close', { delay: 50});
+    await cache2.clear();
+    await cache2.close();
+  });
 });

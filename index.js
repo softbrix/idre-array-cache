@@ -108,15 +108,15 @@ IdreCache.prototype.close = async function() {
         throw new Error("No file for this instance is open");
     }
     this._fInfo.cacheListeners--;
-    if (this._fInfo.cacheListeners === 0) {
+    if (this._fInfo.cacheListeners <= 0) {
         if (this._fInfo.watcher !== undefined) {
             this._fInfo.watcher.close();
         }
-        await persistArray.bind(this)();
-        if (this._tid) {
-            clearTimeout(this._tid);
-        }
         delete fileCache[this._fInfo.path];
+    }
+    await persistArray.bind(this)();
+    if (this._tid) {
+        clearTimeout(this._tid);
     }
     this._removeExitListener();
 
