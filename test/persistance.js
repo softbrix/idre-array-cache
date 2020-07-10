@@ -37,6 +37,13 @@ describe('IdreCache with persistance', function () {
         done();
       }, DELAY * 4)
   });
+  it('should be ok to clear cache and then push new items', async function () {
+    await cache.clear();
+    assert.equal(cache.length, 0)
+    cache.push(nextVal());
+    cache.push(nextVal());
+    assert.equal(cache.length, 2)
+  });
   it('should be ok to clear cache twice', async function () {
     // This way we definately know that the file is removed
     await cache.clear();

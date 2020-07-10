@@ -7,12 +7,11 @@ const FILE_ENCODING = 'utf8';
 const idreEventEmitter = new events.EventEmitter();
 
 // Throttle function: Input as function which needs to be throttled and delay is the time interval in milliseconds
-let tid;
 var  throttle  =  function (func, delay) {
-	if (tid) return;
-	tid = setTimeout(() => { 
+	if (this._tid) return;
+	this._tid = setTimeout(() => { 
         func();	
-        tid = undefined; 
+        this._tid = undefined; 
     }, delay);
 }
 
@@ -114,6 +113,9 @@ IdreCache.prototype.close = async function() {
             this._fInfo.watcher.close();
         }
         await persistArray.bind(this)();
+        if (this._tid) {
+            clearTimeout(this._tid);
+        }
         delete fileCache[this._fInfo.path];
     }
     this._removeExitListener();
@@ -158,7 +160,7 @@ IdreCache.prototype.open = async function(filePath, options) {
     this._fInfo.cacheListeners++;
     // Save current array to file
     if (this._array.length > 0) {
-        throttle(persistArray.bind(this), 0);
+        throttle.bind(this)(persistArray.bind(this), 0);
     }
     // Bind the process exit event so we can write the instance to the file, one listener per instance
     this._removeExitListener = onExit(() => {
@@ -175,8 +177,9 @@ IdreCache.prototype.push = function(value) {
         throw new Error("Argument is not allowed to include 'newline' character");
     }
     this._array.push(value);
+    
     if (this._fInfo) {
-        throttle(persistArray.bind(this), this._op.delay);
+        throttle.bind(this)(persistArray.bind(this), this._op.delay);
     }
     idreEventEmitter.emit('push', value);
 }
@@ -213,9 +216,9 @@ IdreCache.prototype.slice = function(start, end) {
 // Clear the current instance and remove the persisted values, if multiple instances with same file then all instances
 // needs to be cleared to ensure full removal
 IdreCache.prototype.clear = async function() {
-    this._array = [];
+    this._array.length = 0;
     if (this._fInfo) {
-        this._fInfo.array = [];
+        this._fInfo.array.length = 0;
         this._fInfo.lAccess = 0;
         this._fInfo.lSeek = 0;
         await deleteFile(this._fInfo.path);
@@ -225,7 +228,7 @@ IdreCache.prototype.clear = async function() {
 
 // Return the instance lenght as a read only property
 Object.defineProperty(IdreCache.prototype, "length", {
-    get: function() { return this._fInfo !== undefined ? this._fInfo.array.length : 0 + this._array.length; }
+    get: function() { return (this._fInfo !== undefined ? this._fInfo.array.length : 0) + this._array.length; }
 });
 
 // Add listeners API
