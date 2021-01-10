@@ -18,7 +18,17 @@
   "author": "Andreas Sehr <Softbrix>",
   "license": "GPL-3.0",
   "dependencies": {
-    "mocha": "^8.0.1",
     "signal-exit": "^3.0.3"
+  },
+  "devDependencies": {
+    "mocha": "^8.0.1"
+  },
+  "bugs": {
+    "url": "https://github.com/softbrix/idre-array-cache/issues"
+  },
+  "homepage": "https://github.com/softbrix/idre-array-cache#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/softbrix/idre-array-cache.git"
   }
 }

@@ -1,6 +1,8 @@
 const assert = require('assert');
 const IdreCache = require('..');
 const fs = require('fs').promises;
+const fork = require('child_process').fork;
+
 
 const MIN_TIME = 946684799000;
 const MAX_TIME = 33149740506000;
@@ -68,6 +70,7 @@ describe('IdreCache with persistance', function () {
     assert.deepEqual([9,11], sliceCache.slice(-2));
     assert.deepEqual([9], sliceCache.slice(1, -1));
     assert.deepEqual([9], sliceCache.slice(-2, -1));
+    assert.deepEqual([8,9,11], sliceCache.slice(0));
     assert.deepEqual([8,9], sliceCache.slice(0, -1));
     assert.deepEqual([9,11], sliceCache.slice(-2, 55));
     sliceCache.clear();
@@ -85,6 +88,31 @@ describe('IdreCache with persistance', function () {
     let cache2 = new IdreCache();
     await cache2.open('./datafile_close', { delay: 50});
     await cache2.clear();
+    await cache2.close();
+  });
+
+  it('should be able to process in separate processes', async function () {
+    // this.timeout(2000);
+    const TESTFILE = './test/data/processing';
+    await fs.unlink(TESTFILE);
+
+    const iterations = 40;
+    var child1 = fork('./test_helpers/runner.js',[iterations, 0]);
+    var child2 = fork('./test_helpers/runner.js',[iterations, 1000]);
+
+    let onExit = function(prc) {
+      return new Promise((resolve, reject) => {
+        prc.on('exit', code => {
+          (code === 0 ? resolve: reject)(code);
+        })
+      });
+    };
+
+    await Promise.all([onExit(child1), onExit(child2)])
+
+    let cache2 = new IdreCache();
+    await cache2.open(TESTFILE, { delay: 50});
+    assert.equal(cache2.length, 2*iterations);
     await cache2.close();
   });
 });

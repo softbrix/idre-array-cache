@@ -7,7 +7,7 @@ const FILE_ENCODING = 'utf8';
 const idreEventEmitter = new events.EventEmitter();
 
 // Throttle function: Input as function which needs to be throttled and delay is the time interval in milliseconds
-var  throttle  =  function (func, delay) {
+var throttle  =  function (func, delay) {
 	if (this._tid) return;
 	this._tid = setTimeout(() => { 
         func();	
@@ -43,24 +43,25 @@ async function deleteFile(filePath) {
 }
 
 // PersistArray will append the new items to the file
-async function persistArray() {
+async function persistArray(that) {
     // if nothing to write then exit
-    if (this._array.length === 0) {
+    if (that._array.length === 0) {
         return;
     }
 
     // Read current file
-    let newfArray = await readFileArray(this._fInfo.path, this._fInfo);
+    let newfArray = await readFileArray(that._fInfo.path, that._fInfo);
 
     // Append to file
-    var wstream = fs.createWriteStream(this._fInfo.path, { encoding: FILE_ENCODING , flags: 'a'});
-    this._array.forEach( function (item) {
+    var wstream = fs.createWriteStream(that._fInfo.path, { encoding: FILE_ENCODING , flags: 'a'});
+    that._array.forEach( function (item) {
         wstream.write(item + "\n");
     });
     wstream.end();
 
     // Update file array with both file array and appended information
-    this._fInfo.array = newfArray.concat(this._array);
+    that._fInfo.array = newfArray.concat(that._array);
+    that._array = [];
 }
 
 // Read file array will read the file and parse the content and return an array with items if successful
@@ -107,6 +108,15 @@ IdreCache.prototype.close = async function() {
     if (this._fInfo === undefined) {
         throw new Error("No file for this instance is open");
     }
+    // Prevent persistArray to be called twice
+    if (this._tid) {
+        clearTimeout(this._tid);
+    }
+    this._removeExitListener();
+
+    // One last flush
+    await persistArray(this);
+
     this._fInfo.cacheListeners--;
     if (this._fInfo.cacheListeners <= 0) {
         if (this._fInfo.watcher !== undefined) {
@@ -114,11 +124,6 @@ IdreCache.prototype.close = async function() {
         }
         delete fileCache[this._fInfo.path];
     }
-    await persistArray.bind(this)();
-    if (this._tid) {
-        clearTimeout(this._tid);
-    }
-    this._removeExitListener();
 
     this._removeExitListener = undefined;
     this._fInfo = undefined;
@@ -160,11 +165,12 @@ IdreCache.prototype.open = async function(filePath, options) {
     this._fInfo.cacheListeners++;
     // Save current array to file
     if (this._array.length > 0) {
-        throttle.bind(this)(persistArray.bind(this), 0);
+        let that = this;
+        throttle.bind(this)(() => { persistArray(that); }, 0);
     }
     // Bind the process exit event so we can write the instance to the file, one listener per instance
     this._removeExitListener = onExit(() => {
-        persistArray.bind(this);
+        this.close();
     });
 }
 
@@ -176,10 +182,12 @@ IdreCache.prototype.push = function(value) {
     if (typeof value === "string" && value.indexOf('\n') >= 0) {
         throw new Error("Argument is not allowed to include 'newline' character");
     }
+
     this._array.push(value);
     
     if (this._fInfo) {
-        throttle.bind(this)(persistArray.bind(this), this._op.delay);
+        let that = this;
+        throttle.bind(this)(() => { persistArray(that); }, this._op.delay);
     }
     idreEventEmitter.emit('push', value);
 }
