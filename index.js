@@ -43,25 +43,25 @@ async function deleteFile(filePath) {
 }
 
 // PersistArray will append the new items to the file
-async function persistArray(that) {
+async function persistArray() {
     // if nothing to write then exit
-    if (that._array.length === 0) {
+    if (this._array.length === 0) {
         return;
     }
 
     // Read current file
-    let newfArray = await readFileArray(that._fInfo.path, that._fInfo);
+    let newfArray = await readFileArray(this._fInfo.path, this._fInfo);
 
     // Append to file
-    var wstream = fs.createWriteStream(that._fInfo.path, { encoding: FILE_ENCODING , flags: 'a'});
-    that._array.forEach( function (item) {
+    var wstream = fs.createWriteStream(this._fInfo.path, { encoding: FILE_ENCODING , flags: 'a'});
+    this._array.forEach( function (item) {
         wstream.write(item + "\n");
     });
     wstream.end();
 
     // Update file array with both file array and appended information
-    that._fInfo.array = newfArray.concat(that._array);
-    that._array = [];
+    this._fInfo.array = newfArray.concat(this._array);
+    this._array = [];
 }
 
 // Read file array will read the file and parse the content and return an array with items if successful
@@ -115,7 +115,7 @@ IdreCache.prototype.close = async function() {
     this._removeExitListener();
 
     // One last flush
-    await persistArray(this);
+    await persistArray.bind(this)();
 
     this._fInfo.cacheListeners--;
     if (this._fInfo.cacheListeners <= 0) {
@@ -165,8 +165,7 @@ IdreCache.prototype.open = async function(filePath, options) {
     this._fInfo.cacheListeners++;
     // Save current array to file
     if (this._array.length > 0) {
-        let that = this;
-        throttle.bind(this)(() => { persistArray(that); }, 0);
+        throttle.call(this, persistArray.bind(this), 0);
     }
     // Bind the process exit event so we can write the instance to the file, one listener per instance
     this._removeExitListener = onExit(() => {
@@ -186,8 +185,7 @@ IdreCache.prototype.push = function(value) {
     this._array.push(value);
     
     if (this._fInfo) {
-        let that = this;
-        throttle.bind(this)(() => { persistArray(that); }, this._op.delay);
+        throttle.call(this, persistArray.bind(this), this._op.delay);
     }
     idreEventEmitter.emit('push', value);
 }
