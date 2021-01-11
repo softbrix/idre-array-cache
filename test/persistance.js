@@ -10,6 +10,7 @@ const MAX_TIME = 33149740506000;
 const DATA_FILE = './test/data/datafile';
 const DATA_FILE_CLOSE = './test/data/datafile_close';
 const DATA_FILE_SLICE = './test/data/testdata-slice';
+const DATA_FILE_PROCESSING = './test/data/processing';
 
 function nextVal() {
   return MIN_TIME + Math.floor(MAX_TIME * Math.random());
@@ -109,8 +110,7 @@ describe('IdreCache with persistance', function () {
 
   it('should be able to process in separate processes', async function () {
     // this.timeout(2000);
-    const TESTFILE = './test/data/processing';
-    await fs.unlink(TESTFILE);
+    deleteFile(DATA_FILE_PROCESSING);
 
     const iterations = 40;
     var child1 = fork('./test_helpers/runner.js',[iterations, 0]);
@@ -127,7 +127,7 @@ describe('IdreCache with persistance', function () {
     await Promise.all([onExit(child1), onExit(child2)])
 
     let cache2 = new IdreCache();
-    await cache2.open(TESTFILE, { delay: 50});
+    await cache2.open(DATA_FILE_PROCESSING, { delay: 50});
     assert.equal(cache2.length, 2*iterations);
     await cache2.close();
   });
