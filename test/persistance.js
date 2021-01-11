@@ -1,6 +1,7 @@
 const assert = require('assert');
 const IdreCache = require('..');
-const fs = require('fs').promises;
+const fs = require('fs');
+const fsp = fs.promises;
 const fork = require('child_process').fork;
 
 const ITEMS = 20000;
@@ -18,9 +19,12 @@ function nextVal() {
 
 async function deleteFile(fName) {
   try {
-    await fs.unlink(fName);
+    let stat = fs.statSync(fName);
+    if (stat.isFile()) {
+      fs.unlinkSync(fName);
+    }
   } catch(e) {
-    // Ignore
+    // console.log('err', e)
   }
 }
 
@@ -28,7 +32,7 @@ const DELAY = 50;
 describe('IdreCache with persistance', function () {
 
   before(() => {
-    [DATA_FILE, DATA_FILE_CLOSE, DATA_FILE_SLICE].forEach(deleteFile);
+    [DATA_FILE, DATA_FILE_CLOSE, DATA_FILE_SLICE, DATA_FILE_PROCESSING].forEach(deleteFile);
   });
 
   let cache = new IdreCache();
@@ -79,7 +83,7 @@ describe('IdreCache with persistance', function () {
     }
   });
   it('negative slice elements', async function () {
-    await fs.writeFile(DATA_FILE_SLICE, '8\n9');
+    await fsp.writeFile(DATA_FILE_SLICE, '8\n9');
     let sliceCache = new IdreCache();
     await sliceCache.open(DATA_FILE_SLICE);
     sliceCache.push(11);
@@ -110,8 +114,6 @@ describe('IdreCache with persistance', function () {
 
   it('should be able to process in separate processes', async function () {
     // this.timeout(2000);
-    deleteFile(DATA_FILE_PROCESSING);
-
     const iterations = 40;
     var child1 = fork('./test_helpers/runner.js',[iterations, 0]);
     var child2 = fork('./test_helpers/runner.js',[iterations, 1000]);
