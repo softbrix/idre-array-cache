@@ -6,7 +6,7 @@ describe('IdreCache', function () {
     let cache = new IdreCache();
     it('should throw error if wrong type is added', function () {
       try {
-        cache.add({'a' : 'Object not allowed'});
+        cache.push({'a' : 'Object not allowed'});
         fail('Should throw error');
       } catch (e) {
         assert.ok(e, "Error must be defined");
@@ -50,6 +50,7 @@ describe('IdreCache', function () {
       cache.push(6);
       assert.deepEqual([4,5,6], cache.slice(0, 5));
       assert.deepEqual([4,5,6], cache.slice(0));
+      assert.deepEqual([4], cache.slice(0, 1));
       assert.deepEqual([5], cache.slice(1, 2));
       assert.deepEqual([5,6], cache.slice(1,3));
       assert.deepEqual([6], cache.slice(2));

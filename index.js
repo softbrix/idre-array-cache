@@ -2,7 +2,6 @@ const fs = require('fs');
 const onExit = require('signal-exit');
 const events = require('events');
 
-
 const FILE_ENCODING = 'utf8';
 const idreEventEmitter = new events.EventEmitter();
 
@@ -52,11 +51,11 @@ async function persistArray() {
     // Read current file
     let newfArray = await readFileArray(this._fInfo.path, this._fInfo);
 
+    let streamOptions = { flags: 'a', encoding: this._fInfo.encoding };
+    
     // Append to file
-    var wstream = fs.createWriteStream(this._fInfo.path, { encoding: FILE_ENCODING , flags: 'a'});
-    this._array.forEach( function (item) {
-        wstream.write(item + "\n");
-    });
+    var wstream = fs.createWriteStream(this._fInfo.path, streamOptions);
+    this._array.forEach(item => wstream.write(item + "\n"));
     wstream.end();
 
     // Update file array with both file array and appended information
@@ -72,15 +71,16 @@ async function readFileArray(filePath, fInfo) {
             throw new Error('Expected ' + filePath + ' to be a file');
         }
         if (stats.mtimeMs > fInfo.lAccess) {
-            // Open and read file
-            let fileBuffer = await fs.promises.readFile(filePath, {flag: 'r', encoding: FILE_ENCODING});
-
             // Update last acces parameters
             fInfo.lAccess = stats.mtimeMs;
 
+            // Open and read file
+            let fileBuffer = await fs.promises.readFile(filePath, { flag: 'r', encoding: fInfo.encoding });
+
             let arr = fileBuffer.toString().split('\n');
+
             // Remove last if element is empty
-            if (arr.length > 0 &&  arr[arr.length-1] === "") {
+            while (arr.length > 0 &&  arr[arr.length-1] === "") {
                 arr.pop();
             }
             return arr;
@@ -99,7 +99,8 @@ async function readFileArray(filePath, fInfo) {
 var fileCache = {}
 
 // The IdreCache constructor
-function IdreCache() {
+function IdreCache(options) {
+    this._op = options || {};
     this._array = [];
 }
 
@@ -137,13 +138,14 @@ IdreCache.prototype.open = async function(filePath, options) {
     if (this._fInfo !== undefined) {
         throw new Error("A file for this instance is already open");
     }
-    this._op = Object.assign({}, {delay: 200}, options);
+    this._op = Object.assign(this._op, { delay: 200, encoding: FILE_ENCODING }, options);
     if (fileCache[filePath] === undefined) {
         let fInfo = { // The fInfo object stores informaiton about the file
             path: filePath,
             lAccess: 0, // Last access to file
             array: [], // File data
-            cacheListeners: 0
+            cacheListeners: 0,
+            encoding: this._op.encoding,
         };
         // Create file if not exists
         await ensureFile(filePath);

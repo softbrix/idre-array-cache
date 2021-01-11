@@ -1,7 +1,7 @@
 {
   "name": "idre-array-cache",
   "version": "0.2.3",
-  "description": "A appendable array with file persistance/listeners, producer/consumer and inter process capabilities",
+  "description": "An appendable array with file persistance/listeners, producer/consumer and inter process capabilities",
   "main": "index.js",
   "scripts": {
     "test": "mocha --slow 0"

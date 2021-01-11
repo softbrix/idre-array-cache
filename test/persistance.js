@@ -3,28 +3,45 @@ const IdreCache = require('..');
 const fs = require('fs').promises;
 const fork = require('child_process').fork;
 
-
+const ITEMS = 20000;
 const MIN_TIME = 946684799000;
 const MAX_TIME = 33149740506000;
+
+const DATA_FILE = './test/data/datafile';
+const DATA_FILE_CLOSE = './test/data/datafile_close';
+const DATA_FILE_SLICE = './test/data/testdata-slice';
+
 function nextVal() {
   return MIN_TIME + Math.floor(MAX_TIME * Math.random());
 }
 
+async function deleteFile(fName) {
+  try {
+    await fs.unlink(fName);
+  } catch(e) {
+    // Ignore
+  }
+}
+
 const DELAY = 50;
 describe('IdreCache with persistance', function () {
+
+  before(() => {
+    [DATA_FILE, DATA_FILE_CLOSE, DATA_FILE_SLICE].forEach(deleteFile);
+  });
+
   let cache = new IdreCache();
   it('should be ok to open cache', async function () {
-    await cache.open('./datafile', { delay: DELAY});
+    await cache.open(DATA_FILE, { delay: DELAY});
     await cache.clear();
   });
   it('should not be ok to open again', async function () {
     try {
-      await cache.open('./datafile2');
+      await cache.open(DATA_FILE);
       assert.fail('Should have trown error');
     } catch (e) {}
   });
   it('should be ok to add multiple numbers', function (done) {
-      const ITEMS = 20000;
       const FIRST = nextVal();
       cache.push(FIRST);
       for (var i = 1; i < ITEMS; ++i) {
@@ -32,7 +49,7 @@ describe('IdreCache with persistance', function () {
       }
       setTimeout(async () => {
         let newCache = new IdreCache();
-        await newCache.open('./datafile', { delay: DELAY});
+        await newCache.open(DATA_FILE, { delay: DELAY});
         assert.equal(newCache.length, ITEMS)
         assert.equal(FIRST, newCache.slice(0, 1));
         await newCache.close();
@@ -61,10 +78,9 @@ describe('IdreCache with persistance', function () {
     }
   });
   it('negative slice elements', async function () {
-    const fileName = './test/testdata-slice';
-    await fs.writeFile(fileName, '8\n9');
+    await fs.writeFile(DATA_FILE_SLICE, '8\n9');
     let sliceCache = new IdreCache();
-    await sliceCache.open(fileName);
+    await sliceCache.open(DATA_FILE_SLICE);
     sliceCache.push(11);
     assert.deepEqual([11], sliceCache.slice(-1));
     assert.deepEqual([9,11], sliceCache.slice(-2));
@@ -77,7 +93,7 @@ describe('IdreCache with persistance', function () {
   });
   it('should save on close', async function () {
     let cache2 = new IdreCache();
-    await cache2.open('./datafile_close', { delay: 200});
+    await cache2.open(DATA_FILE_CLOSE, { delay: 200});
     assert.equal(cache2.length, 0)
     cache2.push(nextVal());
     cache2.push(nextVal());
@@ -86,7 +102,7 @@ describe('IdreCache with persistance', function () {
   });
   it('should clear file', async function () {
     let cache2 = new IdreCache();
-    await cache2.open('./datafile_close', { delay: 50});
+    await cache2.open(DATA_FILE_CLOSE, { delay: 50});
     await cache2.clear();
     await cache2.close();
   });
