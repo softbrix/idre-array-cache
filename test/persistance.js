@@ -83,7 +83,7 @@ describe('IdreCache with persistance', function () {
     }
   });
   it('negative slice elements', async function () {
-    await fsp.writeFile(DATA_FILE_SLICE, '8\n9');
+    await fsp.writeFile(DATA_FILE_SLICE, '8\n9\n');
     let sliceCache = new IdreCache();
     await sliceCache.open(DATA_FILE_SLICE);
     sliceCache.push(11);
@@ -94,7 +94,6 @@ describe('IdreCache with persistance', function () {
     assert.deepEqual([8,9,11], sliceCache.slice(0));
     assert.deepEqual([8,9], sliceCache.slice(0, -1));
     assert.deepEqual([9,11], sliceCache.slice(-2, 55));
-    sliceCache.clear();
   });
   it('should save on close', async function () {
     let cache2 = new IdreCache();
