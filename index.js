@@ -175,14 +175,18 @@ IdreCache.prototype.open = async function(filePath, options) {
     });
 }
 
-// Push a new value to the array
-IdreCache.prototype.push = function(value) {
+const validateInput = (value) => {
     if (typeof value !== "number" && typeof value !== "string") {
         throw new Error("Argument is wrong type, expected number or string");
     }
     if (typeof value === "string" && value.indexOf('\n') >= 0) {
         throw new Error("Argument is not allowed to include 'newline' character");
     }
+}
+
+// Push a new value to the array
+IdreCache.prototype.push = function(value) {
+    validateInput(value);
 
     this._array.push(value);
     
@@ -190,6 +194,22 @@ IdreCache.prototype.push = function(value) {
         throttle.call(this, persistArray.bind(this), this._op.delay);
     }
     idreEventEmitter.emit('push', value);
+}
+
+IdreCache.prototype.delete = function(value) {
+    validateInput(value);
+
+    const index = this._array.indexOf(value);
+    if (index > -1) {
+        this._array.splice(index, 1);
+    }
+    
+    if (this._fInfo) {
+        throttle.call(this, persistArray.bind(this), this._op.delay);
+    }
+    idreEventEmitter.emit('delete', value);
+    
+    return index;
 }
 
 // Return a subarray with values

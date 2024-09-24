@@ -30,11 +30,43 @@ describe('IdreCache', function () {
         assert.equal(cache.length, size + 1, "One new element should be added")
     });
     it('reset after clear', function () {
-      var size = cache.length;
       cache.push(11);
       cache.clear();
       assert.equal(cache.length, 0, "Reset after clear")
+    });
   });
+  describe('delete', function () {
+    let cache = new IdreCache();
+    it('should be 0 when initialized', function () {
+        assert.equal(cache.length, 0);
+    });
+    it('increase when adding', function () {
+        var size = cache.length;
+        cache.push(1);
+        assert.equal(cache.length, size + 1, "One new element should be added");
+    });
+    it('reduce after delete', function () {
+      var size = cache.length;
+      cache.push(11);
+      assert.equal(cache.length, size + 1, "One new element should be added");
+      cache.delete(11);
+      assert.equal(cache.length, size, "One new element should be removed");
+    });
+    it('delete unknown', function () {
+      var size = cache.length;
+      cache.push(11);
+      assert.equal(cache.length, size + 1, "One new element should be added");
+      cache.delete(12);
+      assert.equal(cache.length, size + 1, "Removing unkknown id should not affect array");
+    });
+    it('delete first occurance', function () {
+      var size = cache.length;
+      cache.push(11);
+      cache.push(11);
+      assert.equal(cache.length, size + 2, "One new element should be added");
+      cache.delete(11);
+      assert.equal(cache.length, size + 1, "One new element should be removed");
+    });
   });
   describe('slice', function () {
     let cache = new IdreCache();
