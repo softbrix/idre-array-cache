@@ -21,7 +21,7 @@
     "signal-exit": "^3.0.3"
   },
   "devDependencies": {
-    "mocha": "^8.2.1"
+    "mocha": "^10.7.3"
   },
   "bugs": {
     "url": "https://github.com/softbrix/idre-array-cache/issues"
